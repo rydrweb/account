@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>rydrweb</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: white;
+        }
+
+        body {
+            justify-content: center;
+            text-align: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            --s: 37px;
+            /* control the size */
+
+            --c: #0000, #282828 0.5deg 119.5deg, #0000 120deg;
+            --g1: conic-gradient(from 60deg at 56.25% calc(425% / 6), var(--c));
+            --g2: conic-gradient(from 180deg at 43.75% calc(425% / 6), var(--c));
+            --g3: conic-gradient(from -60deg at 50% calc(175% / 12), var(--c));
+            background: var(--g1), var(--g1) var(--s) calc(1.73 * var(--s)), var(--g2),
+                var(--g2) var(--s) calc(1.73 * var(--s)), var(--g3) var(--s) 0,
+                var(--g3) 0 calc(1.73 * var(--s)) #1e1e1e;
+            background-size: calc(2 * var(--s)) calc(3.46 * var(--s));
+        }
+
+        .account-container {
+            display: flex;
+            padding: 20px;
+        }
+
+        .sidebar {
+            width: 250px;
+            padding: 10px;
+            border-right: 2px solid #ccc;
+        }
+
+        .content {
+            flex-grow: 1;
+            padding: 10px;
+        }
+
+        .input-field {
+            margin: 10px 0;
+            padding: 8px;
+            width: 100%;
+            font-size: 16px;
+        }
+
+        .description-box {
+            margin-top: 20px;
+        }
+
+        .description-box textarea {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            font-size: 16px;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <a href="https://rydrweb.github.io"><button>Back</button></a>
+    <p>Right now im probably not going to do anything with this, but who knows what will happen.</p>
+    <div class="account-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <h3>Account Info</h3>
+            <div id="username-container">
+                <label for="username">Username: </label>
+                <div id="username-display"></div>
+                <input type="text" id="username-input" class="input-field hidden" placeholder="Enter a username">
+                <button id="save-username-btn" onclick="toggleUsernameEdit()">Edit Username</button>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <h3>Your Profile</h3>
+            <div class="description-box">
+                <label for="description">Profile Description:</label>
+                <textarea id="description-input" placeholder="Enter your description..." disabled></textarea>
+                <button id="save-description-btn" onclick="toggleDescriptionEdit()">Edit Description</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check if there's a stored username and description
+        window.onload = function () {
+            const storedUsername = localStorage.getItem('username');
+            const storedDescription = localStorage.getItem('description');
+
+            // If a username is stored, display it, otherwise show input field
+            if (storedUsername) {
+                document.getElementById('username-display').innerText = storedUsername;
+                document.getElementById('username-input').classList.add('hidden'); // Hide input if username exists
+                document.getElementById('save-username-btn').innerText = 'Edit Username'; // Change button text
+            } else {
+                document.getElementById('username-display').innerText = 'Not Set';
+                document.getElementById('username-input').classList.remove('hidden'); // Show input if username not set
+                document.getElementById('save-username-btn').innerText = 'Save Username'; // Show save button
+            }
+
+            // If a description is stored, show it in the textarea
+            if (storedDescription) {
+                document.getElementById('description-input').value = storedDescription;
+                document.getElementById('save-description-btn').innerText = 'Edit Description'; // Change button text
+            }
+        };
+
+        // Toggle between Edit and Save for the username
+        function toggleUsernameEdit() {
+            const usernameInput = document.getElementById('username-input');
+            const saveUsernameBtn = document.getElementById('save-username-btn');
+
+            // If the username input is hidden (view mode), allow editing
+            if (usernameInput.classList.contains('hidden')) {
+                usernameInput.classList.remove('hidden');
+                saveUsernameBtn.innerText = 'Save Username'; // Change button to "Save"
+            } else {
+                const username = usernameInput.value.trim();
+                if (username) {
+                    // Save the username and hide the input again
+                    localStorage.setItem('username', username);
+                    document.getElementById('username-display').innerText = username;
+                    usernameInput.classList.add('hidden'); // Hide input after saving
+                    saveUsernameBtn.innerText = 'Edit Username'; // Change button back to "Edit"
+                } else {
+                    alert("Please enter a valid username!");
+                }
+            }
+        }
+
+        // Toggle between Edit and Save for the description
+        function toggleDescriptionEdit() {
+            const descriptionInput = document.getElementById('description-input');
+            const saveDescriptionBtn = document.getElementById('save-description-btn');
+
+            // If the description textarea is disabled (view mode), allow editing
+            if (descriptionInput.disabled) {
+                descriptionInput.disabled = false;
+                saveDescriptionBtn.innerText = 'Save Description'; // Change button to "Save"
+            } else {
+                const description = descriptionInput.value.trim();
+                if (description) {
+                    // Save the description and disable the textarea again
+                    localStorage.setItem('description', description);
+                    descriptionInput.disabled = true;
+                    saveDescriptionBtn.innerText = 'Edit Description'; // Change button back to "Edit"
+                } else {
+                    alert("Please enter a description!");
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>
