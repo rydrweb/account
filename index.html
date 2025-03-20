@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Account</title>
+    <title>Account & Search</title>
     <style>
         /* Global styles */
         body {
@@ -19,7 +19,8 @@
             height: 100vh;
         }
 
-        .account-container {
+        .account-container,
+        .search-container {
             background-color: #1f1f1f;
             padding: 20px;
             border-radius: 10px;
@@ -27,6 +28,7 @@
             width: 100%;
             max-width: 500px;
             text-align: center;
+            margin-bottom: 20px;
         }
 
         .username {
@@ -97,10 +99,34 @@
         .input-wrapper {
             margin-bottom: 20px;
         }
+
+        #searchResults {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .player-card {
+            background-color: #333;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .player-card h3 {
+            margin: 0;
+        }
+
+        .player-card p {
+            margin-top: 5px;
+        }
     </style>
 </head>
 
 <body>
+
+    <!-- Account Creation Section -->
     <div class="account-container">
         <div class="username" id="username-display">Username</div>
         <div class="input-wrapper">
@@ -116,33 +142,42 @@
         <div class="tags" id="tags-container">
             <!-- Tags will be displayed here -->
         </div>
+
         <a href="https://rydrweb.github.io/"><button>Back</button></a>
     </div>
 
+    <!-- Search Section -->
+    <div class="search-container">
+        <h2>Search for Player Accounts</h2>
+        <input type="text" id="searchInput" onkeyup="searchPlayers()" placeholder="Search for players...">
+        <div id="searchResults"></div>
+    </div>
+
     <script>
-        // Check if there's a stored username and description
+        // Sample player data (simulated stored data)
+        let players = JSON.parse(localStorage.getItem('players')) || [];
+
         window.onload = function () {
+            // Check for stored username and description
             const storedUsername = localStorage.getItem('username');
             const storedDescription = localStorage.getItem('description');
 
             // If a username is stored, display it, otherwise show input field
             if (storedUsername) {
                 document.getElementById('username-display').innerText = storedUsername;
-                document.getElementById('username-input').classList.add('hidden'); // Hide input if username exists
-                document.getElementById('save-username-btn').innerText = 'Edit Username'; // Change button text
+                document.getElementById('username-input').classList.add('hidden');
+                document.getElementById('save-username-btn').innerText = 'Edit Username';
             } else {
                 document.getElementById('username-display').innerText = 'Not Set';
-                document.getElementById('username-input').classList.remove('hidden'); // Show input if username not set
-                document.getElementById('save-username-btn').innerText = 'Save Username'; // Show save button
+                document.getElementById('username-input').classList.remove('hidden');
+                document.getElementById('save-username-btn').innerText = 'Save Username';
             }
 
-            // If a description is stored, show it in the textarea
             if (storedDescription) {
                 document.getElementById('description-input').value = storedDescription;
-                document.getElementById('save-description-btn').innerText = 'Edit Description'; // Change button text
+                document.getElementById('save-description-btn').innerText = 'Edit Description';
             }
 
-            // Display selected tags
             displayTags();
         };
 
@@ -151,17 +186,16 @@
             const usernameInput = document.getElementById('username-input');
             const saveUsernameBtn = document.getElementById('save-username-btn');
 
-            // If the username input is hidden (view mode), allow editing
             if (usernameInput.classList.contains('hidden')) {
                 usernameInput.classList.remove('hidden');
-                saveUsernameBtn.innerText = 'Save Username'; // Change button to "Save"
+                saveUsernameBtn.innerText = 'Save Username';
             } else {
                 const username = usernameInput.value.trim();
                 if (username) {
                     localStorage.setItem('username', username);
                     document.getElementById('username-display').innerText = username;
                     usernameInput.classList.add('hidden');
-                    saveUsernameBtn.innerText = 'Edit Username'; // Change button to "Edit"
+                    saveUsernameBtn.innerText = 'Edit Username';
                 }
             }
         }
@@ -172,26 +206,23 @@
             const saveDescriptionBtn = document.getElementById('save-description-btn');
             const description = descriptionInput.value.trim();
 
-            // Check if the button is in "Edit Description" mode
             if (saveDescriptionBtn.innerText === 'Edit Description') {
-                // Switch to "Save Description" and allow editing
                 descriptionInput.disabled = false;
                 saveDescriptionBtn.innerText = 'Save Description';
             } else {
-                // Save description and switch back to "Edit Description"
                 if (description) {
                     localStorage.setItem('description', description);
-                    descriptionInput.disabled = true; // Disable the input once saved
-                    saveDescriptionBtn.innerText = 'Edit Description'; // Change button to "Edit"
+                    descriptionInput.disabled = true;
+                    saveDescriptionBtn.innerText = 'Edit Description';
                 }
             }
         }
 
-        // Function to display selected tags
+        // Display selected tags
         function displayTags() {
             let selectedTags = JSON.parse(localStorage.getItem('selectedTags')) || [];
             const tagsContainer = document.getElementById('tags-container');
-            tagsContainer.innerHTML = ''; // Clear previous tags before re-rendering
+            tagsContainer.innerHTML = '';
             selectedTags.forEach(tag => {
                 const tagElement = document.createElement('div');
                 tagElement.className = 'tag';
@@ -199,8 +230,52 @@
                 tagsContainer.appendChild(tagElement);
             });
         }
+
+        // Search players
+        function searchPlayers() {
+            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+            const resultsContainer = document.getElementById('searchResults');
+            resultsContainer.innerHTML = '';
+
+            const filteredPlayers = players.filter(player => {
+                return player.username.toLowerCase().includes(searchQuery) || 
+                       player.description.toLowerCase().includes(searchQuery);
+            });
+
+            if (filteredPlayers.length > 0) {
+                filteredPlayers.forEach(player => {
+                    const playerCard = document.createElement('div');
+                    playerCard.classList.add('player-card');
+
+                    playerCard.innerHTML = `
+                        <h3>${player.username} <span>${player.tag}</span></h3>
+                        <p>${player.description}</p>
+                    `;
+
+                    resultsContainer.appendChild(playerCard);
+                });
+            } else {
+                resultsContainer.innerHTML = '<p>No results found.</p>';
+            }
+        }
+
+        // Save the player account data (when user saves their username and description)
+        function savePlayerData() {
+            const username = localStorage.getItem('username');
+            const description = localStorage.getItem('description');
+            const tags = JSON.parse(localStorage.getItem('selectedTags')) || [];
+
+            // Create player object and store it
+            const newPlayer = { username, description, tag: tags.join(', ') };
+            players.push(newPlayer);
+            localStorage.setItem('players', JSON.stringify(players));
+        }
+
+        // Automatically save player data when the page is loaded (you can call this function when needed)
+        savePlayerData();
     </script>
 
 </body>
 
 </html>
+
