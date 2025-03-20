@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Account</title>
+    <title>rydrweb</title>
     <style>
         /* Global styles */
         body {
@@ -133,8 +133,12 @@
     </div>
 
     <script>
+        const binId = '67dca28b8561e97a50efe82b'; // Replace with your JSONBin bin ID
+        const apiKey = '$2a$10$MywhgiUZi5VPoF5K5NLiY.kvrhreMO6bq3ZLXsSyuwuPaBWgIXfB6'; // Replace with your JSONBin secret API key
+        const serverUrl = `https://api.jsonbin.io/v3/b/67dca28b8561e97a50efe82b${binId}`;
+
         // Check if there's a stored username and description
-        window.onload = function () {
+        window.onload = async function () {
             const storedUsername = localStorage.getItem('username');
             const storedDescription = localStorage.getItem('description');
 
@@ -156,7 +160,7 @@
             }
 
             // Display all users by default
-            displayAllUsers();
+            await displayAllUsers();
         };
 
         // Toggle between Edit and Save for the username
@@ -172,7 +176,7 @@
                 const username = usernameInput.value.trim();
                 if (username) {
                     localStorage.setItem('username', username);
-                    addUsername(username);
+                    saveUsernameToServer(username);
                     document.getElementById('username-display').innerText = username;
                     usernameInput.classList.add('hidden');
                     saveUsernameBtn.innerText = 'Edit Username'; // Change button to "Edit"
@@ -202,15 +206,21 @@
         }
 
         // Function to search for usernames
-        function searchUsernames(query) {
-            const allUsernames = JSON.parse(localStorage.getItem('allUsernames')) || [];
+        async function searchUsernames(query) {
+            const response = await fetch(serverUrl, {
+                headers: {
+                    'X-Master-Key': apiKey
+                }
+            });
+            const data = await response.json();
+            const allUsernames = data.record;
             return allUsernames.filter(username => username.toLowerCase().includes(query.toLowerCase()));
         }
 
         // Perform search and display results
-        function performSearch() {
+        async function performSearch() {
             const query = document.getElementById('search-input').value.trim();
-            const results = searchUsernames(query);
+            const results = await searchUsernames(query);
             const resultsContainer = document.getElementById('search-results');
             resultsContainer.innerHTML = ''; // Clear previous results
             if (results.length > 0) {
@@ -229,8 +239,14 @@
         }
 
         // Display all users
-        function displayAllUsers() {
-            const allUsernames = JSON.parse(localStorage.getItem('allUsernames')) || [];
+        async function displayAllUsers() {
+            const response = await fetch(serverUrl, {
+                headers: {
+                    'X-Master-Key': apiKey
+                }
+            });
+            const data = await response.json();
+            const allUsernames = data.record;
             const resultsContainer = document.getElementById('search-results');
             resultsContainer.innerHTML = ''; // Clear previous results
             if (allUsernames.length > 0) {
@@ -248,26 +264,30 @@
             }
         }
 
-        // Add a new username to the list of all usernames
-        function addUsername(username) {
-            let allUsernames = JSON.parse(localStorage.getItem('allUsernames')) || [];
-            if (!allUsernames.includes(username)) {
-                allUsernames.push(username);
-                localStorage.setItem('allUsernames', JSON.stringify(allUsernames));
+        // Save a new username to the server
+        async function saveUsernameToServer(username) {
+            const response = await fetch(serverUrl, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': apiKey
+                },
+                body: JSON.stringify([...await getAllUsernames(), username])
+            });
+            if (!response.ok) {
+                console.error('Failed to save username to server');
             }
         }
 
-        // Add the current username to the list of all usernames on save
-        function saveUsername() {
-            const usernameInput = document.getElementById('username-input');
-            const username = usernameInput.value.trim();
-            if (username) {
-                localStorage.setItem('username', username);
-                addUsername(username);
-                document.getElementById('username-display').innerText = username;
-                usernameInput.classList.add('hidden');
-                document.getElementById('save-username-btn').innerText = 'Edit Username';
-            }
+        // Get all usernames from the server
+        async function getAllUsernames() {
+            const response = await fetch(serverUrl, {
+                headers: {
+                    'X-Master-Key': apiKey
+                }
+            });
+            const data = await response.json();
+            return data.record;
         }
     </script>
 
