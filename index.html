@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Account & Search</title>
+    <title>Account</title>
     <style>
         /* Global styles */
         body {
@@ -16,12 +16,10 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            flex-direction: column;
             height: 100vh;
         }
 
-        .account-container,
-        .search-container {
+        .account-container {
             background-color: #1f1f1f;
             padding: 20px;
             border-radius: 10px;
@@ -29,7 +27,6 @@
             width: 100%;
             max-width: 500px;
             text-align: center;
-            margin-bottom: 20px;
         }
 
         .username {
@@ -101,33 +98,18 @@
             margin-bottom: 20px;
         }
 
-        #searchResults {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        .player-card {
+        .search-result {
             background-color: #333;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        .player-card h3 {
-            margin: 0;
-        }
-
-        .player-card p {
+            color: white;
+            padding: 10px;
             margin-top: 5px;
+            border-radius: 5px;
+            text-align: left;
         }
     </style>
 </head>
 
 <body>
-
-    <!-- Account Creation Section -->
     <div class="account-container">
         <div class="username" id="username-display">Username</div>
         <div class="input-wrapper">
@@ -140,46 +122,41 @@
             <button id="save-description-btn" onclick="saveDescription()">Save Description</button>
         </div>
 
-        <div class="tags" id="tags-container">
-            <!-- Tags will be displayed here -->
-        </div>
-
         <a href="https://rydrweb.github.io/"><button>Back</button></a>
-    </div>
 
-    <!-- Search Section -->
-    <div class="search-container">
-        <h2>Search for Player Accounts</h2>
-        <input type="text" id="searchInput" onkeyup="searchPlayers()" placeholder="Search for players...">
-        <div id="searchResults"></div>
+        <div class="input-wrapper">
+            <input type="text" id="search-input" placeholder="Search for usernames..." oninput="performSearch()">
+        </div>
+        <div id="search-results">
+            <!-- Search results will be displayed here -->
+        </div>
     </div>
 
     <script>
-        // Sample player data (simulated stored data)
-        let players = JSON.parse(localStorage.getItem('players')) || [];
-
+        // Check if there's a stored username and description
         window.onload = function () {
-            // Check for stored username and description
             const storedUsername = localStorage.getItem('username');
             const storedDescription = localStorage.getItem('description');
 
             // If a username is stored, display it, otherwise show input field
             if (storedUsername) {
                 document.getElementById('username-display').innerText = storedUsername;
-                document.getElementById('username-input').classList.add('hidden');
-                document.getElementById('save-username-btn').innerText = 'Edit Username';
+                document.getElementById('username-input').classList.add('hidden'); // Hide input if username exists
+                document.getElementById('save-username-btn').innerText = 'Edit Username'; // Change button text
             } else {
                 document.getElementById('username-display').innerText = 'Not Set';
-                document.getElementById('username-input').classList.remove('hidden');
-                document.getElementById('save-username-btn').innerText = 'Save Username';
+                document.getElementById('username-input').classList.remove('hidden'); // Show input if username not set
+                document.getElementById('save-username-btn').innerText = 'Save Username'; // Show save button
             }
 
+            // If a description is stored, show it in the textarea
             if (storedDescription) {
                 document.getElementById('description-input').value = storedDescription;
-                document.getElementById('save-description-btn').innerText = 'Edit Description';
+                document.getElementById('save-description-btn').innerText = 'Edit Description'; // Change button text
             }
 
-            displayTags();
+            // Display all users by default
+            displayAllUsers();
         };
 
         // Toggle between Edit and Save for the username
@@ -187,16 +164,18 @@
             const usernameInput = document.getElementById('username-input');
             const saveUsernameBtn = document.getElementById('save-username-btn');
 
+            // If the username input is hidden (view mode), allow editing
             if (usernameInput.classList.contains('hidden')) {
                 usernameInput.classList.remove('hidden');
-                saveUsernameBtn.innerText = 'Save Username';
+                saveUsernameBtn.innerText = 'Save Username'; // Change button to "Save"
             } else {
                 const username = usernameInput.value.trim();
                 if (username) {
                     localStorage.setItem('username', username);
+                    addUsername(username);
                     document.getElementById('username-display').innerText = username;
                     usernameInput.classList.add('hidden');
-                    saveUsernameBtn.innerText = 'Edit Username';
+                    saveUsernameBtn.innerText = 'Edit Username'; // Change button to "Edit"
                 }
             }
         }
@@ -207,73 +186,89 @@
             const saveDescriptionBtn = document.getElementById('save-description-btn');
             const description = descriptionInput.value.trim();
 
+            // Check if the button is in "Edit Description" mode
             if (saveDescriptionBtn.innerText === 'Edit Description') {
+                // Switch to "Save Description" and allow editing
                 descriptionInput.disabled = false;
                 saveDescriptionBtn.innerText = 'Save Description';
             } else {
+                // Save description and switch back to "Edit Description"
                 if (description) {
                     localStorage.setItem('description', description);
-                    descriptionInput.disabled = true;
-                    saveDescriptionBtn.innerText = 'Edit Description';
+                    descriptionInput.disabled = true; // Disable the input once saved
+                    saveDescriptionBtn.innerText = 'Edit Description'; // Change button to "Edit"
                 }
             }
         }
 
-        // Display selected tags
-        function displayTags() {
-            let selectedTags = JSON.parse(localStorage.getItem('selectedTags')) || [];
-            const tagsContainer = document.getElementById('tags-container');
-            tagsContainer.innerHTML = '';
-            selectedTags.forEach(tag => {
-                const tagElement = document.createElement('div');
-                tagElement.className = 'tag';
-                tagElement.textContent = tag;
-                tagsContainer.appendChild(tagElement);
-            });
+        // Function to search for usernames
+        function searchUsernames(query) {
+            const allUsernames = JSON.parse(localStorage.getItem('allUsernames')) || [];
+            return allUsernames.filter(username => username.toLowerCase().includes(query.toLowerCase()));
         }
 
-        // Search players
-        function searchPlayers() {
-            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
-            const resultsContainer = document.getElementById('searchResults');
-            resultsContainer.innerHTML = '';
-
-            const filteredPlayers = players.filter(player => {
-                return player.username.toLowerCase().includes(searchQuery) || 
-                       player.description.toLowerCase().includes(searchQuery);
-            });
-
-            if (filteredPlayers.length > 0) {
-                filteredPlayers.forEach(player => {
-                    const playerCard = document.createElement('div');
-                    playerCard.classList.add('player-card');
-
-                    playerCard.innerHTML = `
-                        <h3>${player.username} <span>${player.tag}</span></h3>
-                        <p>${player.description}</p>
-                    `;
-
-                    resultsContainer.appendChild(playerCard);
+        // Perform search and display results
+        function performSearch() {
+            const query = document.getElementById('search-input').value.trim();
+            const results = searchUsernames(query);
+            const resultsContainer = document.getElementById('search-results');
+            resultsContainer.innerHTML = ''; // Clear previous results
+            if (results.length > 0) {
+                results.forEach(result => {
+                    const resultElement = document.createElement('div');
+                    resultElement.className = 'search-result';
+                    resultElement.textContent = result;
+                    resultsContainer.appendChild(resultElement);
                 });
             } else {
-                resultsContainer.innerHTML = '<p>No results found.</p>';
+                const noResultsElement = document.createElement('div');
+                noResultsElement.className = 'search-result';
+                noResultsElement.textContent = 'No users found with this name.';
+                resultsContainer.appendChild(noResultsElement);
             }
         }
 
-        // Save the player account data (when user saves their username and description)
-        function savePlayerData() {
-            const username = localStorage.getItem('username');
-            const description = localStorage.getItem('description');
-            const tags = JSON.parse(localStorage.getItem('selectedTags')) || [];
-
-            // Create player object and store it
-            const newPlayer = { username, description, tag: tags.join(', ') };
-            players.push(newPlayer);
-            localStorage.setItem('players', JSON.stringify(players));
+        // Display all users
+        function displayAllUsers() {
+            const allUsernames = JSON.parse(localStorage.getItem('allUsernames')) || [];
+            const resultsContainer = document.getElementById('search-results');
+            resultsContainer.innerHTML = ''; // Clear previous results
+            if (allUsernames.length > 0) {
+                allUsernames.forEach(username => {
+                    const resultElement = document.createElement('div');
+                    resultElement.className = 'search-result';
+                    resultElement.textContent = username;
+                    resultsContainer.appendChild(resultElement);
+                });
+            } else {
+                const noResultsElement = document.createElement('div');
+                noResultsElement.className = 'search-result';
+                noResultsElement.textContent = 'No users found.';
+                resultsContainer.appendChild(noResultsElement);
+            }
         }
 
-        // Automatically save player data when the page is loaded (you can call this function when needed)
-        savePlayerData();
+        // Add a new username to the list of all usernames
+        function addUsername(username) {
+            let allUsernames = JSON.parse(localStorage.getItem('allUsernames')) || [];
+            if (!allUsernames.includes(username)) {
+                allUsernames.push(username);
+                localStorage.setItem('allUsernames', JSON.stringify(allUsernames));
+            }
+        }
+
+        // Add the current username to the list of all usernames on save
+        function saveUsername() {
+            const usernameInput = document.getElementById('username-input');
+            const username = usernameInput.value.trim();
+            if (username) {
+                localStorage.setItem('username', username);
+                addUsername(username);
+                document.getElementById('username-display').innerText = username;
+                usernameInput.classList.add('hidden');
+                document.getElementById('save-username-btn').innerText = 'Edit Username';
+            }
+        }
     </script>
 
 </body>
