@@ -42,17 +42,57 @@
 
         .tag {
             display: inline-block;
-            background-color: #39ff14;
-            color: #121212;
             padding: 8px 15px;
             margin: 5px;
             border-radius: 5px;
             font-size: 14px;
-            transition: background-color 0.3s;
+            transition: background-color 0.3s, transform 0.3s;
+            color: #121212;
+            cursor: pointer;
         }
 
         .tag:hover {
-            background-color: #32d900;
+            transform: scale(1.1);
+        }
+
+        .tag:nth-child(1) {
+            background-color: #39ff14;
+        }
+
+        .tag:nth-child(2) {
+            background-color: #ff5733;
+        }
+
+        .tag:nth-child(3) {
+            background-color: #33ccff;
+        }
+
+        .tag:nth-child(4) {
+            background-color: #ff33cc;
+        }
+
+        .tag:nth-child(5) {
+            background-color: #ffff33;
+        }
+
+        .tag:nth-child(6) {
+            background-color: #ff9933;
+        }
+
+        .tag:nth-child(7) {
+            background-color: #9933ff;
+        }
+
+        .tag:nth-child(8) {
+            background-color: #33ff99;
+        }
+
+        .tag:nth-child(9) {
+            background-color: #ff3333;
+        }
+
+        .tag:nth-child(10) {
+            background-color: #33ff33;
         }
 
         /* Input & Button Styles */
@@ -97,15 +137,6 @@
         .input-wrapper {
             margin-bottom: 20px;
         }
-
-        .search-result {
-            background-color: #333;
-            color: white;
-            padding: 10px;
-            margin-top: 5px;
-            border-radius: 5px;
-            text-align: left;
-        }
     </style>
 </head>
 
@@ -122,23 +153,15 @@
             <button id="save-description-btn" onclick="saveDescription()">Save Description</button>
         </div>
 
+        <div class="tags" id="tags-container">
+            <!-- Tags will be displayed here -->
+        </div>
         <a href="https://rydrweb.github.io/"><button>Back</button></a>
-
-        <div class="input-wrapper">
-            <input type="text" id="search-input" placeholder="Search for usernames..." oninput="performSearch()">
-        </div>
-        <div id="search-results">
-            <!-- Search results will be displayed here -->
-        </div>
     </div>
 
     <script>
-        const binId = '67dca28b8561e97a50efe82b'; // Replace with your JSONBin bin ID
-        const apiKey = '$2a$10$MywhgiUZi5VPoF5K5NLiY.kvrhreMO6bq3ZLXsSyuwuPaBWgIXfB6'; // Replace with your JSONBin secret API key
-        const serverUrl = `https://api.jsonbin.io/v3/b/${binId}`;
-
         // Check if there's a stored username and description
-        window.onload = async function () {
+        window.onload = function () {
             const storedUsername = localStorage.getItem('username');
             const storedDescription = localStorage.getItem('description');
 
@@ -159,8 +182,8 @@
                 document.getElementById('save-description-btn').innerText = 'Edit Description'; // Change button text
             }
 
-            // Display all users by default
-            await displayAllUsers();
+            // Display selected tags
+            displayTags();
         };
 
         // Toggle between Edit and Save for the username
@@ -176,7 +199,6 @@
                 const username = usernameInput.value.trim();
                 if (username) {
                     localStorage.setItem('username', username);
-                    saveUsernameToServer(username);
                     document.getElementById('username-display').innerText = username;
                     usernameInput.classList.add('hidden');
                     saveUsernameBtn.innerText = 'Edit Username'; // Change button to "Edit"
@@ -205,92 +227,19 @@
             }
         }
 
-        // Function to search for usernames
-        async function searchUsernames(query) {
-            const response = await fetch(serverUrl, {
-                headers: {
-                    'X-Master-Key': apiKey
-                }
+        // Function to display selected tags
+        function displayTags() {
+            let selectedTags = JSON.parse(localStorage.getItem('selectedTags')) || [];
+            const tagsContainer = document.getElementById('tags-container');
+            tagsContainer.innerHTML = ''; // Clear previous tags before re-rendering
+            selectedTags.forEach(tag => {
+                const tagElement = document.createElement('div');
+                tagElement.className = 'tag';
+                tagElement.textContent = tag;
+                tagsContainer.appendChild(tagElement);
             });
-            const data = await response.json();
-            const allUsernames = data.record;
-            return allUsernames.filter(username => username.toLowerCase().includes(query.toLowerCase()));
-        }
-
-        // Perform search and display results
-        async function performSearch() {
-            const query = document.getElementById('search-input').value.trim();
-            const results = await searchUsernames(query);
-            const resultsContainer = document.getElementById('search-results');
-            resultsContainer.innerHTML = ''; // Clear previous results
-            if (results.length > 0) {
-                results.forEach(result => {
-                    const resultElement = document.createElement('div');
-                    resultElement.className = 'search-result';
-                    resultElement.textContent = result;
-                    resultsContainer.appendChild(resultElement);
-                });
-            } else {
-                const noResultsElement = document.createElement('div');
-                noResultsElement.className = 'search-result';
-                noResultsElement.textContent = 'No users found with this name.';
-                resultsContainer.appendChild(noResultsElement);
-            }
-        }
-
-        // Display all users
-        async function displayAllUsers() {
-            const response = await fetch(serverUrl, {
-                headers: {
-                    'X-Master-Key': apiKey
-                }
-            });
-            const data = await response.json();
-            const allUsernames = data.record;
-            const resultsContainer = document.getElementById('search-results');
-            resultsContainer.innerHTML = ''; // Clear previous results
-            if (allUsernames.length > 0) {
-                allUsernames.forEach(username => {
-                    const resultElement = document.createElement('div');
-                    resultElement.className = 'search-result';
-                    resultElement.textContent = username;
-                    resultsContainer.appendChild(resultElement);
-                });
-            } else {
-                const noResultsElement = document.createElement('div');
-                noResultsElement.className = 'search-result';
-                noResultsElement.textContent = 'No users found.';
-                resultsContainer.appendChild(noResultsElement);
-            }
-        }
-
-        // Save a new username to the server
-        async function saveUsernameToServer(username) {
-            const response = await fetch(serverUrl, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Master-Key': apiKey
-                },
-                body: JSON.stringify([...await getAllUsernames(), username])
-            });
-            if (!response.ok) {
-                console.error('Failed to save username to server');
-            }
-        }
-
-        // Get all usernames from the server
-        async function getAllUsernames() {
-            const response = await fetch(serverUrl, {
-                headers: {
-                    'X-Master-Key': apiKey
-                }
-            });
-            const data = await response.json();
-            return data.record;
         }
     </script>
-
 </body>
 
 </html>
